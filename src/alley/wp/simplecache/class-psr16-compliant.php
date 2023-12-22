@@ -119,6 +119,8 @@ final class PSR16_Compliant implements CacheInterface {
 	public function getMultiple( iterable $keys, $default = null ): iterable {
 		$this->validate_iterable( $keys );
 
+		$keys = $this->iterable_keys( $keys );
+
 		foreach ( $keys as $key ) {
 			$this->validate_key( $key );
 		}
@@ -179,6 +181,8 @@ final class PSR16_Compliant implements CacheInterface {
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
 		$this->validate_iterable( $keys );
+
+		$keys = $this->iterable_keys( $keys );
 
 		foreach ( $keys as $key ) {
 			$this->validate_key( $key );
@@ -367,5 +371,21 @@ final class PSR16_Compliant implements CacheInterface {
 		}
 
 		return $cache['val'];
+	}
+
+	/**
+	 * Get keys from iterable.
+	 *
+	 * @param iterable $keys The iterable.
+	 * @return array
+	 */
+	private function iterable_keys( iterable $keys ): array {
+		$out = [];
+
+		foreach ( $keys as $key ) {
+			$out[] = $key;
+		}
+
+		return $out;
 	}
 }
