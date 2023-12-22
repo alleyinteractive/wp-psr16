@@ -5,13 +5,12 @@
  * @package wp-psr16
  */
 
-// declare(strict_types=1);
-
 namespace Alley\WP\SimpleCache;
 
 use DateInterval;
 use Psr\Clock\ClockInterface;
 use Psr\SimpleCache\CacheInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Ensures PSR-16 compliance for the underlying cache implementation.
@@ -45,41 +44,41 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Fetches a value from the cache.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If the $key string is not a legal value.
+	 * @throws Invalid_Argument_Exception If the $key string is not a legal value.
 	 *
 	 * @param string $key     The unique key of this item in the cache.
 	 * @param mixed  $default Default value to return if the key does not exist.
 	 * @return mixed The value of the item from the cache, or $default in case of cache miss.
 	 */
-	public function get( mixed $key, mixed $default = null ): mixed {
-		$this->validateKey( $key );
+	public function get( $key, $default = null ): mixed {
+		$this->validate_key( $key );
 
 		$cache = $this->origin->get( $key, $default );
 
-		return $this->decodedValue( $key, $cache, $default );
+		return $this->decoded_value( $key, $cache, $default );
 	}
 
 	/**
 	 * Persists data in the cache, uniquely referenced by a key with an optional expiration TTL time.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If the $key string is not a legal value.
+	 * @throws Invalid_Argument_Exception If the $key string is not a legal value.
 	 *
 	 * @param string                 $key   The key of the item to store.
 	 * @param mixed                  $value The value of the item to store, must be serializable.
 	 * @param null|int|\DateInterval $ttl   Optional. The TTL value of this item.
 	 * @return bool True on success and false on failure.
 	 */
-	public function set( mixed $key, mixed $value, mixed $ttl = null ): bool {
-		$this->validateKey( $key );
-		$this->validateTtl( $ttl );
+	public function set( $key, $value, $ttl = null ): bool {
+		$this->validate_key( $key );
+		$this->validate_ttl( $ttl );
 
-		$ttl = $this->normalizedTtl( $ttl );
+		$ttl = $this->normalized_ttl( $ttl );
 
 		if ( \is_int( $ttl ) && $ttl <= 0 ) {
 			return $this->origin->delete( $key );
 		}
 
-		$enc = $this->encodedValue( $key, $value, $ttl );
+		$enc = $this->encoded_value( $key, $value, $ttl );
 
 		return $this->origin->set( $key, $enc, $ttl );
 	}
@@ -87,13 +86,13 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Delete an item from the cache by its unique key.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If the $key string is not a legal value.
+	 * @throws Invalid_Argument_Exception If the $key string is not a legal value.
 	 *
 	 * @param string $key The unique cache key of the item to delete.
 	 * @return bool True if the item was successfully removed. False if there was an error.
 	 */
-	public function delete( mixed $key ): bool {
-		$this->validateKey( $key );
+	public function delete( $key ): bool {
+		$this->validate_key( $key );
 
 		return $this->origin->delete( $key );
 	}
@@ -110,25 +109,25 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Obtains multiple cache items by their unique keys.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
-	 *                                                   the $keys are not a legal value.
+	 * @throws Invalid_Argument_Exception If $keys is neither an array nor a Traversable, or if any of
+	 *                                    the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys    A list of keys that can be obtained in a single operation.
-	 * @param mixed            $default Default value to return for keys that do not exist.
-	 * @return iterable<string, mixed> A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
+	 * @param iterable $keys    A list of keys that can be obtained in a single operation.
+	 * @param mixed    $default Default value to return for keys that do not exist.
+	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
-	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
-		$this->validateIterable( $keys );
+	public function getMultiple( iterable $keys, $default = null ): iterable {
+		$this->validate_iterable( $keys );
 
 		foreach ( $keys as $key ) {
-			$this->validateKey( $key );
+			$this->validate_key( $key );
 		}
 
 		$cache = $this->origin->getMultiple( $keys, $default );
 		$final = [];
 
 		foreach ( $cache as $key => $value ) {
-			$final[ $key ] = $this->decodedValue( $key, $value, $default );
+			$final[ $key ] = $this->decoded_value( $key, $value, $default );
 		}
 
 		return $final;
@@ -137,8 +136,8 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Persists a set of key => value pairs in the cache, with an optional TTL.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
-	 *                                                    the $keys are not a legal value.
+	 * @throws Invalid_Argument_Exception If $keys is neither an array nor a Traversable, or if any of
+	 *                                    the $keys are not a legal value.
 	 *
 	 * @param iterable               $values A list of key => value pairs for a multiple-set operation.
 	 * @param null|int|\DateInterval $ttl    Optional. The TTL value of this item. If no value is sent and
@@ -146,11 +145,11 @@ final class PSR16_Compliant implements CacheInterface {
 	 *                                       for it or let the driver take care of that.
 	 * @return bool True on success and false on failure.
 	 */
-	public function setMultiple( iterable $values, mixed $ttl = null ): bool {
-		$this->validateIterable( $values );
-		$this->validateTtl( $ttl );
+	public function setMultiple( iterable $values, $ttl = null ): bool {
+		$this->validate_iterable( $values );
+		$this->validate_ttl( $ttl );
 
-		$ttl = $this->normalizedTtl( $ttl );
+		$ttl = $this->normalized_ttl( $ttl );
 
 		if ( \is_int( $ttl ) && $ttl <= 0 ) {
 			$keys = \is_array( $values ) ? array_keys( $values ) : array_keys( iterator_to_array( $values ) );
@@ -161,9 +160,9 @@ final class PSR16_Compliant implements CacheInterface {
 		$final = [];
 
 		foreach ( $values as $key => $value ) {
-			$this->validateKey( $key );
+			$this->validate_key( $key );
 
-			$final[ $key ] = $this->encodedValue( $key, $value, $ttl );
+			$final[ $key ] = $this->encoded_value( $key, $value, $ttl );
 		}
 
 		return $this->origin->setMultiple( $final, $ttl );
@@ -172,17 +171,17 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Deletes multiple cache items in a single operation.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
-	 *                                                     the $keys are not a legal value.
+	 * @throws Invalid_Argument_Exception If $keys is neither an array nor a Traversable, or if any of
+	 *                                    the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys A list of string-based keys to be deleted.
+	 * @param iterable $keys A list of string-based keys to be deleted.
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
-		$this->validateIterable( $keys );
+		$this->validate_iterable( $keys );
 
 		foreach ( $keys as $key ) {
-			$this->validateKey( $key );
+			$this->validate_key( $key );
 		}
 
 		return $this->origin->deleteMultiple( $keys );
@@ -191,29 +190,33 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Determines whether an item is present in the cache.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If the $key string is not a legal value.
+	 * @throws Invalid_Argument_Exception If the $key string is not a legal value.
 	 *
 	 * @param string $key The cache item key.
 	 * @return bool
 	 */
-	public function has( mixed $key ): bool {
-		$this->validateKey( $key );
+	public function has( $key ): bool {
+		$this->validate_key( $key );
 
 		return $this->origin->has( $key );
 	}
 
 	/**
-	 * Adapted from https://github.com/laminas/laminas-cache/.
+	 * Validate cache key. Adapted from https://github.com/laminas/laminas-cache/.
 	 *
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If key is invalid.
+	 * @throws Invalid_Argument_Exception If the $key string is not a legal value.
+	 *
+	 * @param mixed $key The key to validate.
 	 */
-	private function validateKey( mixed $key ): void {
+	private function validate_key( mixed $key ): void {
 		if ( ! \is_string( $key ) ) {
 			throw new Invalid_Argument_Exception(
-				sprintf(
-					'Key must be string; got type "%s" %s',
-					\gettype( $key ),
-					sprintf( ' (%s)', var_export( $key, true ) ),
+				esc_html(
+					sprintf(
+						'Key must be string; got type "%s" (%s)',
+						\gettype( $key ),
+						var_export( $key, true ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export
+					),
 				),
 			);
 		}
@@ -224,54 +227,71 @@ final class PSR16_Compliant implements CacheInterface {
 
 		if ( preg_match( sprintf( '/[%s]/', preg_quote( self::INVALID_KEY_CHARS, '/' ) ), $key ) ) {
 			throw new Invalid_Argument_Exception(
-				sprintf(
-					'Key cannot contain any of (%s)',
-					self::INVALID_KEY_CHARS,
+				esc_html(
+					sprintf(
+						'Key cannot contain any of (%s)',
+						self::INVALID_KEY_CHARS,
+					),
 				),
 			);
 		}
 	}
 
 	/**
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If input is invalid.
+	 * Validate iterable.
+	 *
+	 * @throws Invalid_Argument_Exception If input is invalid.
+	 *
+	 * @param mixed $iterable The iterable to validate.
 	 */
-	private function validateIterable( mixed $iterable ): void {
+	private function validate_iterable( mixed $iterable ): void {
 		if ( ! is_iterable( $iterable ) ) {
 			throw new Invalid_Argument_Exception(
-				sprintf(
-					'Input must be iterable; got type "%s" %s',
-					\gettype( $iterable ),
-					sprintf( ' (%s)', var_export( $iterable, true ) ),
+				esc_html(
+					sprintf(
+						'Input must be iterable; got type "%s" (%s)',
+						\gettype( $iterable ),
+						var_export( $iterable, true ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export
+					),
 				),
 			);
 		}
 	}
 
 	/**
-	 * @throws \Psr\SimpleCache\InvalidArgumentException If input is invalid.
+	 * Validate TTL type.
+	 *
+	 * @throws Invalid_Argument_Exception If input is invalid.
+	 *
+	 * @param mixed $ttl The TTL to validate.
 	 */
-	private function validateTtl( mixed $ttl ): void {
+	private function validate_ttl( mixed $ttl ): void {
 		if ( ! \is_int( $ttl ) && ! $ttl instanceof DateInterval && null !== $ttl ) {
 			throw new Invalid_Argument_Exception(
-				sprintf(
-					'TTL must be integer, null, or DateInterval; got type "%s" %s',
-					\gettype( $ttl ),
-					sprintf( ' (%s)', var_export( $ttl, true ) ),
+				esc_html(
+					sprintf(
+						'TTL must be integer, null, or DateInterval; got type "%s" (%s)',
+						\gettype( $ttl ),
+						var_export( $ttl, true ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export
+					),
 				),
 			);
 		}
 	}
 
 	/**
-	 * From https://github.com/laminas/laminas-cache/.
+	 * Normalize possible TTL types to seconds, if any. From https://github.com/laminas/laminas-cache/.
+	 *
+	 * @param mixed $ttl The TTL to normalize.
+	 * @return int|null
 	 */
-	private function normalizedTtl( mixed $ttl ): int|null {
-		// null === absence of a TTL
+	private function normalized_ttl( mixed $ttl ): int|null {
+		// null === absence of a TTL.
 		if ( null === $ttl ) {
 			return null;
 		}
 
-		// integers are always okay
+		// Integers are always okay.
 		if ( \is_int( $ttl ) ) {
 			return $ttl;
 		}
@@ -282,7 +302,15 @@ final class PSR16_Compliant implements CacheInterface {
 		return $end->getTimestamp() - $now->getTimestamp();
 	}
 
-	private function encodedValue( mixed $key, mixed $value, int|null $ttl ): string {
+	/**
+	 * Encoded cache item to preserve original key, data type, and expiration time.
+	 *
+	 * @param mixed    $key   The item's key.
+	 * @param mixed    $value The item's value.
+	 * @param int|null $ttl   The item's TTL.
+	 * @return string
+	 */
+	private function encoded_value( mixed $key, mixed $value, int|null $ttl ): string {
 		$value = [
 			'iss' => self::ISS,
 			'exp' => null,
@@ -294,24 +322,32 @@ final class PSR16_Compliant implements CacheInterface {
 			$value['exp'] = $this->clock->now()->getTimestamp() + $ttl;
 		}
 
-		return serialize( $value );
+		// Serializing is necessary to preserve data types, per the PSR-16 spec.
+		return serialize( $value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 	}
 
-	private function decodedValue( mixed $key, mixed $cache, mixed $default ): mixed {
-		if ( $cache === $default ) {
+	/**
+	 * Decoded cache item, if it was encoded by us and not stale.
+	 *
+	 * @throws Invalid_Argument_Exception If stale value cannot be deleted.
+	 *
+	 * @param mixed $key     The item's expected key.
+	 * @param mixed $cache   The value to decode.
+	 * @param mixed $default The default value.
+	 * @return mixed
+	 */
+	private function decoded_value( mixed $key, mixed $cache, mixed $default ): mixed {
+		if ( ! is_serialized( $cache ) ) {
+			// Not recognized.
 			return $default;
 		}
 
-		if ( ! \is_string( $cache ) ) {
-			return $cache;
-		}
-
-		$cache = unserialize( $cache );
+		$cache = unserialize( $cache ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
 
 		$is_encoded = (
 			\is_array( $cache )
 			&& isset( $cache['iss'] )
-			&& $cache['iss'] === self::ISS
+			&& self::ISS === $cache['iss']
 			&& isset( $cache['key'] )
 			&& $cache['key'] === $key
 			&& \array_key_exists( 'val', $cache )
@@ -320,7 +356,8 @@ final class PSR16_Compliant implements CacheInterface {
 		);
 
 		if ( ! $is_encoded ) {
-			return $cache;
+			// Not recognized.
+			return $default;
 		}
 
 		if ( \is_int( $cache['exp'] ) && $cache['exp'] <= $this->clock->now()->getTimestamp() ) {

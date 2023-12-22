@@ -55,7 +55,7 @@ final class Metadata_Adapter implements CacheInterface {
 	/**
 	 * Create an instance for caching to term meta.
 	 *
-	 * @param int $user_id Term ID.
+	 * @param int $term_id Term ID.
 	 * @return CacheInterface
 	 */
 	public static function for_term( int $term_id ): CacheInterface {
@@ -124,9 +124,9 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                   the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys    A list of keys that can be obtained in a single operation.
-	 * @param mixed            $default Default value to return for keys that do not exist.
-	 * @return iterable<string, mixed> A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
+	 * @param iterable $keys    A list of keys that can be obtained in a single operation.
+	 * @param mixed    $default Default value to return for keys that do not exist.
+	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
 	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
 		$metadata = \function_exists( "get_{$this->type}_meta" )
@@ -182,7 +182,7 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                     the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys A list of string-based keys to be deleted.
+	 * @param iterable $keys A list of string-based keys to be deleted.
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {

@@ -10,6 +10,7 @@ namespace Alley\WP\SimpleCache;
 use Alley\WP\SimpleCache\PSR16_Compliant;
 use Mantle\Testkit\Test_Case;
 use Psr\SimpleCache\CacheInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 use Symfony\Component\Clock\MockClock;
 
 /**
@@ -17,23 +18,16 @@ use Symfony\Component\Clock\MockClock;
  */
 abstract class AdapterTestCase extends Test_Case {
 	/**
-	 * FunctionName => reason.
-	 *
-	 * @type array
-	 */
-	protected $skippedTests = [];
-
-	/**
 	 * Instance under test.
 	 *
-	 * @type CacheInterface
+	 * @var CacheInterface
 	 */
 	private CacheInterface $cache;
 
 	/**
 	 * Clock instance.
 	 *
-	 * @type \Symfony\Component\Clock\ClockInterface
+	 * @var \Symfony\Component\Clock\ClockInterface
 	 */
 	private \Symfony\Component\Clock\ClockInterface $clock;
 
@@ -51,7 +45,10 @@ abstract class AdapterTestCase extends Test_Case {
 		parent::setUp();
 
 		$this->clock = new MockClock();
-		$this->cache = $this->create_simplecache();
+		$this->cache = new PSR16_Compliant(
+			$this->clock,
+			$this->create_simplecache(),
+		);
 	}
 
 	/**
@@ -66,10 +63,10 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Advance time perceived by the cache for the purposes of testing TTL.
 	 *
-	 * @param int $seconds
+	 * @param int $seconds Number of seconds to advance.
 	 */
 	public function advance_time( $seconds ) {
-		sleep( $seconds );
+		$this->clock->sleep( $seconds );
 	}
 
 	/**
@@ -114,6 +111,8 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Data provider for invalid TTL values.
+	 *
 	 * @return array
 	 */
 	public static function invalid_ttl() {
@@ -123,9 +122,9 @@ abstract class AdapterTestCase extends Test_Case {
 			[ false ],
 			[ 'abc' ],
 			[ 2.5 ],
-			[ ' 1' ], // can be casted to a int
-			[ '12foo' ], // can be casted to a int
-			[ '025' ], // can be interpreted as hex
+			[ ' 1' ], // Can be cast to int.
+			[ '12foo' ], // Can be cast to int.
+			[ '025' ], // Can be interpreted as hex.
 			[ new \stdClass() ],
 			[ [ 'array' ] ],
 		];
@@ -160,12 +159,18 @@ abstract class AdapterTestCase extends Test_Case {
 		];
 	}
 
+	/**
+	 * Test set().
+	 */
 	public function test_set() {
 		$result = $this->cache->set( 'key', 'value' );
 		$this->assertTrue( $result, 'set() must return true if success' );
 		$this->assertEquals( 'value', $this->cache->get( 'key' ) );
 	}
 
+	/**
+	 * Test set() with TTLs.
+	 */
 	public function test_set_ttl() {
 		$result = $this->cache->set( 'key1', 'value', 2 );
 		$this->assertTrue( $result, 'set() must return true if success' );
@@ -180,6 +185,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertNull( $this->cache->get( 'key2' ), 'Value must expire after ttl.' );
 	}
 
+	/**
+	 * Test set() with expired TTLs.
+	 */
 	public function test_set_expired_ttl() {
 		$this->cache->set( 'key0', 'value' );
 		$this->cache->set( 'key0', 'value', 0 );
@@ -191,6 +199,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertFalse( $this->cache->has( 'key1' ) );
 	}
 
+	/**
+	 * Test get().
+	 */
 	public function test_get() {
 		$this->assertNull( $this->cache->get( 'key' ) );
 		$this->assertEquals( 'foo', $this->cache->get( 'key', 'foo' ) );
@@ -199,6 +210,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertEquals( 'value', $this->cache->get( 'key', 'foo' ) );
 	}
 
+	/**
+	 * Test delete().
+	 */
 	public function test_delete() {
 		$this->assertTrue( $this->cache->delete( 'key' ), 'Deleting a value that does not exist should return true' );
 		$this->cache->set( 'key', 'value' );
@@ -206,6 +220,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertNull( $this->cache->get( 'key' ), 'Values must be deleted on delete()' );
 	}
 
+	/**
+	 * Test clear().
+	 */
 	public function test_clear() {
 		$this->assertTrue( $this->cache->clear(), 'Clearing an empty cache should return true' );
 		$this->cache->set( 'key', 'value' );
@@ -213,22 +230,39 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertNull( $this->cache->get( 'key' ), 'Values must be deleted on clear()' );
 	}
 
-	public function test_set_multiple() {
-		$result = $this->cache->setMultiple( [ 'key0' => 'value0', 'key1' => 'value1' ] );
+	/**
+	 * Test setMultiple().
+	 */
+	public function test_setMultiple() {
+		$result = $this->cache->setMultiple(
+			[
+				'key0' => 'value0',
+				'key1' => 'value1',
+			]
+		);
 		$this->assertTrue( $result, 'setMultiple() must return true if success' );
 		$this->assertEquals( 'value0', $this->cache->get( 'key0' ) );
 		$this->assertEquals( 'value1', $this->cache->get( 'key1' ) );
 	}
 
 	/**
-	 * https://github.com/php-cache/integration-tests/issues/92
+	 * See https://github.com/php-cache/integration-tests/issues/92.
 	 */
-	public function test_set_multiple_with_integer_array_key() {
+	public function test_setMultiple_with_integer_array_key() {
 		$this->markTestSkipped( 'Integer array keys are not supported.' );
 	}
 
-	public function test_set_multiple_ttl() {
-		$this->cache->setMultiple( [ 'key2' => 'value2', 'key3' => 'value3' ], 2 );
+	/**
+	 * Test setMultiple() with TTLs.
+	 */
+	public function test_setMultiple_ttl() {
+		$this->cache->setMultiple(
+			[
+				'key2' => 'value2',
+				'key3' => 'value3',
+			],
+			2
+		);
 		$this->assertEquals( 'value2', $this->cache->get( 'key2' ) );
 		$this->assertEquals( 'value3', $this->cache->get( 'key3' ) );
 
@@ -241,13 +275,25 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertNull( $this->cache->get( 'key4' ), 'Value must expire after ttl.' );
 	}
 
-	public function test_set_multiple_expired_ttl() {
-		$this->cache->setMultiple( [ 'key0' => 'value0', 'key1' => 'value1' ], 0 );
+	/**
+	 * Test setMultiple() with expired TTLs.
+	 */
+	public function test_setMultiple_expired_ttl() {
+		$this->cache->setMultiple(
+			[
+				'key0' => 'value0',
+				'key1' => 'value1',
+			],
+			0
+		);
 		$this->assertNull( $this->cache->get( 'key0' ) );
 		$this->assertNull( $this->cache->get( 'key1' ) );
 	}
 
-	public function test_set_multiple_with_generator() {
+	/**
+	 * Test setMultiple() with generator function.
+	 */
+	public function test_setMultiple_with_generator() {
 		$gen = function () {
 			yield 'key0' => 'value0';
 			yield 'key1' => 'value1';
@@ -258,8 +304,10 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertEquals( 'value1', $this->cache->get( 'key1' ) );
 	}
 
-
-	public function test_get_multiple() {
+	/**
+	 * Test getMultiple().
+	 */
+	public function test_getMultiple() {
 		$result = $this->cache->getMultiple( [ 'key0', 'key1' ] );
 		$keys   = [];
 		foreach ( $result as $i => $r ) {
@@ -274,7 +322,7 @@ abstract class AdapterTestCase extends Test_Case {
 		$keys   = [];
 		foreach ( $result as $key => $r ) {
 			$keys[] = $key;
-			if ( $key === 'key3' ) {
+			if ( 'key3' === $key ) {
 				$this->assertEquals( 'value', $r );
 			} else {
 				$this->assertEquals( 'foo', $r );
@@ -284,39 +332,43 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertSame( [ 'key2', 'key3', 'key4' ], $keys );
 	}
 
-//	public function test_get_multiple_with_generator() {
-//		if ( isset( $this->skippedTests[ __FUNCTION__ ] ) ) {
-//			$this->markTestSkipped( $this->skippedTests[ __FUNCTION__ ] );
-//		}
-//
-//		$gen = function () {
-//			yield 1 => 'key0';
-//			yield 1 => 'key1';
-//		};
-//
-//		$this->cache->set( 'key0', 'value0' );
-//		$result = $this->cache->getMultiple( $gen() );
-//		$keys   = [];
-//		foreach ( $result as $key => $r ) {
-//			$keys[] = $key;
-//			if ( $key === 'key0' ) {
-//				$this->assertEquals( 'value0', $r );
-//			} elseif ( $key === 'key1' ) {
-//				$this->assertNull( $r );
-//			} else {
-//				$this->assertFalse( true, 'This should not happen' );
-//			}
-//		}
-//		sort( $keys );
-//		$this->assertSame( [ 'key0', 'key1' ], $keys );
-//		$this->assertEquals( 'value0', $this->cache->get( 'key0' ) );
-//		$this->assertNull( $this->cache->get( 'key1' ) );
-//	}
+	/**
+	 * Test getMultiple() with a generator function.
+	 */
+	public function test_getMultiple_with_generator() {
+		$gen = function () {
+			yield 1 => 'key0';
+			yield 1 => 'key1';
+		};
 
-	public function test_delete_multiple() {
+		$this->cache->set( 'key0', 'value0' );
+		$result = $this->cache->getMultiple( $gen() );
+		$keys   = [];
+		foreach ( $result as $key => $r ) {
+			$keys[] = $key;
+			if ( 'key0' === $key ) {
+				$this->assertEquals( 'value0', $r );
+			} elseif ( 'key1' === $key ) {
+				$this->assertNull( $r );
+			} else {
+				$this->assertFalse( true, 'This should not happen' );
+			}
+		}
+		sort( $keys );
+		$this->assertSame( [ 'key0', 'key1' ], $keys );
+		$this->assertEquals( 'value0', $this->cache->get( 'key0' ) );
+		$this->assertNull( $this->cache->get( 'key1' ) );
+	}
+
+	/**
+	 * Test deleteMultiple().
+	 */
+	public function test_deleteMultiple() {
 		$this->assertTrue( $this->cache->deleteMultiple( [] ), 'Deleting a empty array should return true' );
-		$this->assertTrue( $this->cache->deleteMultiple( [ 'key' ] ),
-			'Deleting a value that does not exist should return true' );
+		$this->assertTrue(
+			$this->cache->deleteMultiple( [ 'key' ] ),
+			'Deleting a value that does not exist should return true'
+		);
 
 		$this->cache->set( 'key0', 'value0' );
 		$this->cache->set( 'key1', 'value1' );
@@ -325,28 +377,33 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertNull( $this->cache->get( 'key1' ), 'Values must be deleted on deleteMultiple()' );
 	}
 
-//	public function test_delete_multiple_generator() {
-//		if ( isset( $this->skippedTests[ __FUNCTION__ ] ) ) {
-//			$this->markTestSkipped( $this->skippedTests[ __FUNCTION__ ] );
-//		}
-//
-//		$gen = function () {
-//			yield 1 => 'key0';
-//			yield 1 => 'key1';
-//		};
-//		$this->cache->set( 'key0', 'value0' );
-//		$this->assertTrue( $this->cache->deleteMultiple( $gen() ), 'Deleting a generator should return true' );
-//
-//		$this->assertNull( $this->cache->get( 'key0' ), 'Values must be deleted on deleteMultiple()' );
-//		$this->assertNull( $this->cache->get( 'key1' ), 'Values must be deleted on deleteMultiple()' );
-//	}
+	/**
+	 * Test deleteMultiple() with a generator function.
+	 */
+	public function test_deleteMultiple_generator() {
+		$gen = function () {
+			yield 1 => 'key0';
+			yield 1 => 'key1';
+		};
+		$this->cache->set( 'key0', 'value0' );
+		$this->assertTrue( $this->cache->deleteMultiple( $gen() ), 'Deleting a generator should return true' );
 
+		$this->assertNull( $this->cache->get( 'key0' ), 'Values must be deleted on deleteMultiple()' );
+		$this->assertNull( $this->cache->get( 'key1' ), 'Values must be deleted on deleteMultiple()' );
+	}
+
+	/**
+	 * Test has().
+	 */
 	public function test_has() {
 		$this->assertFalse( $this->cache->has( 'key0' ) );
 		$this->cache->set( 'key0', 'value0' );
 		$this->assertTrue( $this->cache->has( 'key0' ) );
 	}
 
+	/**
+	 * Test long keys.
+	 */
 	public function test_basic_usage_with_long_key() {
 		$key = str_repeat( 'a', 300 );
 
@@ -362,7 +419,11 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test get() with invalid keys.
+	 *
 	 * @dataProvider invalid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
 	public function test_get_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
@@ -370,21 +431,32 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test getMultiple() with invalid keys.
+	 *
 	 * @dataProvider invalid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
-	public function test_get_multiple_invalid_keys( $key ) {
+	public function test_getMultiple_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->getMultiple( [ 'key1', $key, 'key2' ] );
 	}
 
-	public function test_get_multiple_no_iterable() {
-		// Not an InvalidArgumentException because it is a TypeError.
+	/**
+	 * Test getMultiple() with an invalid iterable.
+	 */
+	public function test_getMultiple_no_iterable() {
+		// Now a TypeError, not an InvalidArgumentException.
 		$this->expectException( 'TypeError' );
 		$this->cache->getMultiple( 'key' );
 	}
 
 	/**
+	 * Test set() with invalid keys.
+	 *
 	 * @dataProvider invalid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
 	public function test_set_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
@@ -392,9 +464,13 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test setMultiple() with invalid keys.
+	 *
 	 * @dataProvider invalid_array_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
-	public function test_set_multiple_invalid_keys( $key ) {
+	public function test_setMultiple_invalid_keys( $key ) {
 		$values = function () use ( $key ) {
 			yield 'key1' => 'foo';
 			yield $key => 'bar';
@@ -404,14 +480,21 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->cache->setMultiple( $values() );
 	}
 
-	public function test_set_multiple_no_iterable() {
-		// Not an InvalidArgumentException because it is a TypeError.
+	/**
+	 * Test setMultiple() with an invalid iterable.
+	 */
+	public function test_setMultiple_no_iterable() {
+		// Now a TypeError, not an InvalidArgumentException.
 		$this->expectException( 'TypeError' );
 		$this->cache->setMultiple( 'key' );
 	}
 
 	/**
+	 * Test has() with invalid keys.
+	 *
 	 * @dataProvider invalid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
 	public function test_has_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
@@ -419,7 +502,11 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test delete() with invalid keys.
+	 *
 	 * @dataProvider invalid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
 	public function test_delete_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
@@ -427,20 +514,31 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test deleteMultiple() with invalid keys.
+	 *
 	 * @dataProvider invalid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
-	public function test_delete_multiple_invalid_keys( $key ) {
+	public function test_deleteMultiple_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->deleteMultiple( [ 'key1', $key, 'key2' ] );
 	}
 
-	public function test_delete_multiple_no_iterable() {
+	/**
+	 * Test deleteMultiple() with an invalid iterable.
+	 */
+	public function test_deleteMultiple_no_iterable() {
 		$this->expectException( 'TypeError' );
 		$this->cache->deleteMultiple( 'key' );
 	}
 
 	/**
+	 * Test set() with invalid TTLs.
+	 *
 	 * @dataProvider invalid_ttl
+	 *
+	 * @param mixed $ttl TTL to test.
 	 */
 	public function test_set_invalid_ttl( $ttl ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
@@ -448,13 +546,20 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test setMultiple() with invalid TTLs.
+	 *
 	 * @dataProvider invalid_ttl
+	 *
+	 * @param mixed $ttl TTL to test.
 	 */
-	public function test_set_multiple_invalid_ttl( $ttl ) {
+	public function test_setMultiple_invalid_ttl( $ttl ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->setMultiple( [ 'key' => 'value' ], $ttl );
 	}
 
+	/**
+	 * Test overwriting values with null.
+	 */
 	public function test_null_overwrite() {
 		$this->cache->set( 'key', 5 );
 		$this->cache->set( 'key', null );
@@ -462,6 +567,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertNull( $this->cache->get( 'key' ), 'Setting null to a key must overwrite previous value' );
 	}
 
+	/**
+	 * Test string data type preservation.
+	 */
 	public function test_data_type_string() {
 		$this->cache->set( 'key', '5' );
 		$result = $this->cache->get( 'key' );
@@ -469,6 +577,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertTrue( is_string( $result ), 'Wrong data type. If we store a string we must get an string back.' );
 	}
 
+	/**
+	 * Test integer data type preservation.
+	 */
 	public function test_data_type_integer() {
 		$this->cache->set( 'key', 5 );
 		$result = $this->cache->get( 'key' );
@@ -476,6 +587,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertTrue( is_int( $result ), 'Wrong data type. If we store an int we must get an int back.' );
 	}
 
+	/**
+	 * Test float data type preservation.
+	 */
 	public function test_data_type_float() {
 		$float = 1.23456789;
 		$this->cache->set( 'key', $float );
@@ -484,6 +598,9 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertEquals( $float, $result );
 	}
 
+	/**
+	 * Test boolean data type preservation.
+	 */
 	public function test_data_type_boolean() {
 		$this->cache->set( 'key', false );
 		$result = $this->cache->get( 'key' );
@@ -492,14 +609,23 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertTrue( $this->cache->has( 'key' ), 'has() should return true when true are stored. ' );
 	}
 
+	/**
+	 * Test array data type preservation.
+	 */
 	public function test_data_type_array() {
-		$array = [ 'a' => 'foo', 2 => 'bar' ];
+		$array = [
+			'a' => 'foo',
+			2   => 'bar',
+		];
 		$this->cache->set( 'key', $array );
 		$result = $this->cache->get( 'key' );
 		$this->assertTrue( is_array( $result ), 'Wrong data type. If we store array we must get an array back.' );
 		$this->assertEquals( $array, $result );
 	}
 
+	/**
+	 * Test object data type preservation.
+	 */
 	public function test_data_type_object() {
 		$object    = new \stdClass();
 		$object->a = 'foo';
@@ -509,23 +635,26 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertEquals( $object, $result );
 	}
 
-//	public function test_binary_data() {
-//		if ( isset( $this->skippedTests[ __FUNCTION__ ] ) ) {
-//			$this->markTestSkipped( $this->skippedTests[ __FUNCTION__ ] );
-//		}
-//
-//		$data = '';
-//		for ( $i = 0; $i < 256; $i ++ ) {
-//			$data .= chr( $i );
-//		}
-//
-//		$this->cache->set( 'key', $data );
-//		$result = $this->cache->get( 'key' );
-//		$this->assertTrue( $data === $result, 'Binary data must survive a round trip.' );
-//	}
+	/**
+	 * Test binary data preservation.
+	 */
+	public function test_binary_data() {
+		$data = '';
+		for ( $i = 0; $i < 256; $i++ ) {
+			$data .= chr( $i );
+		}
+
+		$this->cache->set( 'key', $data );
+		$result = $this->cache->get( 'key' );
+		$this->assertTrue( $data === $result, 'Binary data must survive a round trip.' );
+	}
 
 	/**
+	 * Test set() with valid keys.
+	 *
 	 * @dataProvider valid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
 	public function test_set_valid_keys( $key ) {
 		$this->cache->set( $key, 'foobar' );
@@ -533,9 +662,13 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test setMultiple() with valid keys.
+	 *
 	 * @dataProvider valid_keys
+	 *
+	 * @param mixed $key Key to test.
 	 */
-	public function test_set_multiple_valid_keys( $key ) {
+	public function test_setMultiple_valid_keys( $key ) {
 		$this->cache->setMultiple( [ $key => 'foobar' ] );
 		$result = $this->cache->getMultiple( [ $key ] );
 		$keys   = [];
@@ -548,7 +681,11 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test set() with valid data.
+	 *
 	 * @dataProvider valid_data
+	 *
+	 * @param mixed $data Data to test.
 	 */
 	public function test_set_valid_data( $data ) {
 		$this->cache->set( 'key', $data );
@@ -556,9 +693,13 @@ abstract class AdapterTestCase extends Test_Case {
 	}
 
 	/**
+	 * Test setMultiple() with valid data.
+	 *
 	 * @dataProvider valid_data
+	 *
+	 * @param mixed $data Data to test.
 	 */
-	public function test_set_multiple_valid_data( $data ) {
+	public function test_setMultiple_valid_data( $data ) {
 		$this->cache->setMultiple( [ 'key' => $data ] );
 		$result = $this->cache->getMultiple( [ 'key' ] );
 		$keys   = [];
@@ -569,19 +710,25 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->assertSame( [ 'key' ], $keys );
 	}
 
+	/**
+	 * Test use of object as default value.
+	 */
 	public function test_object_as_default_value() {
 		$obj      = new \stdClass();
 		$obj->foo = 'value';
 		$this->assertEquals( $obj, $this->cache->get( 'key', $obj ) );
 	}
 
+	/**
+	 * Test that an object does not change between storage and retrieval.
+	 */
 	public function test_object_does_not_change_in_cache() {
 		$obj      = new \stdClass();
 		$obj->foo = 'value';
 		$this->cache->set( 'key', $obj );
 		$obj->foo = 'changed';
 
-		$cacheObject = $this->cache->get( 'key' );
-		$this->assertEquals( 'value', $cacheObject->foo, 'Object in cache should not have their values changed.' );
+		$cache_object = $this->cache->get( 'key' );
+		$this->assertEquals( 'value', $cache_object->foo, 'Object in cache should not have their values changed.' );
 	}
 }

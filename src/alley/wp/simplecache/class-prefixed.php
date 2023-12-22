@@ -1,10 +1,18 @@
 <?php
+/**
+ * Prefixed class file
+ *
+ * @package wp-psr16
+ */
 
 namespace Alley\WP\SimpleCache;
 
 use Psr\SimpleCache\CacheInterface;
 use Stringable;
 
+/**
+ * PSR-16 implementation that prefixes cache keys.
+ */
 final class Prefixed implements CacheInterface {
 	/**
 	 * Constructor.
@@ -71,9 +79,9 @@ final class Prefixed implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                   the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys    A list of keys that can be obtained in a single operation.
-	 * @param mixed            $default Default value to return for keys that do not exist.
-	 * @return iterable<string, mixed> A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
+	 * @param iterable $keys    A list of keys that can be obtained in a single operation.
+	 * @param mixed    $default Default value to return for keys that do not exist.
+	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
 	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
 		$map = [];
@@ -121,7 +129,7 @@ final class Prefixed implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                     the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys A list of string-based keys to be deleted.
+	 * @param iterable $keys A list of string-based keys to be deleted.
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
@@ -145,6 +153,13 @@ final class Prefixed implements CacheInterface {
 	public function has( string $key ): bool {
 		return $this->origin->has( $this->prefixed_key( $key ) );
 	}
+
+	/**
+	 * Prefixes a key.
+	 *
+	 * @param string $key The cache item key.
+	 * @return string
+	 */
 	private function prefixed_key( string $key ): string {
 		return $this->prefix . $key;
 	}

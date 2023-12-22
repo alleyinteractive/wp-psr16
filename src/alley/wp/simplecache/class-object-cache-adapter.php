@@ -49,6 +49,8 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return mixed The value of the item from the cache, or $default in case of cache miss.
 	 */
 	public function get( string $key, mixed $default = null ): mixed {
+		$found = null;
+
 		$out = wp_cache_get( $key, $this->group, false, $found );
 
 		// Not all implementations honor $found.
@@ -70,7 +72,12 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function set( string $key, mixed $value, \DateInterval|int|null $ttl = null ): bool {
-		return (bool) wp_cache_set( $key, $value, $this->group, null === $ttl ? 0 : (int) $ttl );
+		return (bool) wp_cache_set(
+			$key,
+			$value,
+			$this->group,
+			null === $ttl ? 0 : (int) $ttl, // phpcs:ignore WordPressVIPMinimum.Performance.LowExpiryCacheTime.CacheTimeUndetermined
+		);
 	}
 
 	/**
@@ -106,9 +113,9 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                   the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys    A list of keys that can be obtained in a single operation.
-	 * @param mixed            $default Default value to return for keys that do not exist.
-	 * @return iterable<string, mixed> A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
+	 * @param iterable $keys    A list of keys that can be obtained in a single operation.
+	 * @param mixed    $default Default value to return for keys that do not exist.
+	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
 	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
 		$out = wp_cache_get_multiple( $keys, $this->group );
@@ -159,7 +166,7 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                     the $keys are not a legal value.
 	 *
-	 * @param iterable<string> $keys A list of string-based keys to be deleted.
+	 * @param iterable $keys A list of string-based keys to be deleted.
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
