@@ -27,7 +27,7 @@ final class Option_Adapter implements CacheInterface {
 	public static function create(): CacheInterface {
 		return new PSR16_Compliant(
 			new NativeClock(),
-			new Prefixed(
+			new Prefixed_Keys(
 				'_psr16_',
 				new self(),
 			),

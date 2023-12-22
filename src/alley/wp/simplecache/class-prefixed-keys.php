@@ -1,6 +1,6 @@
 <?php
 /**
- * Prefixed class file
+ * Prefixed_Keys class file
  *
  * @package wp-psr16
  */
@@ -13,7 +13,7 @@ use Stringable;
 /**
  * PSR-16 implementation that prefixes cache keys.
  */
-final class Prefixed implements CacheInterface {
+final class Prefixed_Keys implements CacheInterface {
 	/**
 	 * Constructor.
 	 *
