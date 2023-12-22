@@ -574,7 +574,7 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->cache->set( 'key', '5' );
 		$result = $this->cache->get( 'key' );
 		$this->assertTrue( '5' === $result, 'Wrong data type. If we store a string we must get an string back.' );
-		$this->assertTrue( is_string( $result ), 'Wrong data type. If we store a string we must get an string back.' );
+		$this->assertTrue( \is_string( $result ), 'Wrong data type. If we store a string we must get an string back.' );
 	}
 
 	/**
@@ -584,7 +584,7 @@ abstract class AdapterTestCase extends Test_Case {
 		$this->cache->set( 'key', 5 );
 		$result = $this->cache->get( 'key' );
 		$this->assertTrue( 5 === $result, 'Wrong data type. If we store an int we must get an int back.' );
-		$this->assertTrue( is_int( $result ), 'Wrong data type. If we store an int we must get an int back.' );
+		$this->assertTrue( \is_int( $result ), 'Wrong data type. If we store an int we must get an int back.' );
 	}
 
 	/**
@@ -594,7 +594,7 @@ abstract class AdapterTestCase extends Test_Case {
 		$float = 1.23456789;
 		$this->cache->set( 'key', $float );
 		$result = $this->cache->get( 'key' );
-		$this->assertTrue( is_float( $result ), 'Wrong data type. If we store float we must get an float back.' );
+		$this->assertTrue( \is_float( $result ), 'Wrong data type. If we store float we must get an float back.' );
 		$this->assertEquals( $float, $result );
 	}
 
@@ -604,7 +604,7 @@ abstract class AdapterTestCase extends Test_Case {
 	public function test_data_type_boolean() {
 		$this->cache->set( 'key', false );
 		$result = $this->cache->get( 'key' );
-		$this->assertTrue( is_bool( $result ), 'Wrong data type. If we store boolean we must get an boolean back.' );
+		$this->assertTrue( \is_bool( $result ), 'Wrong data type. If we store boolean we must get an boolean back.' );
 		$this->assertFalse( $result );
 		$this->assertTrue( $this->cache->has( 'key' ), 'has() should return true when true are stored. ' );
 	}
@@ -619,7 +619,7 @@ abstract class AdapterTestCase extends Test_Case {
 		];
 		$this->cache->set( 'key', $array );
 		$result = $this->cache->get( 'key' );
-		$this->assertTrue( is_array( $result ), 'Wrong data type. If we store array we must get an array back.' );
+		$this->assertTrue( \is_array( $result ), 'Wrong data type. If we store array we must get an array back.' );
 		$this->assertEquals( $array, $result );
 	}
 
@@ -631,7 +631,7 @@ abstract class AdapterTestCase extends Test_Case {
 		$object->a = 'foo';
 		$this->cache->set( 'key', $object );
 		$result = $this->cache->get( 'key' );
-		$this->assertTrue( is_object( $result ), 'Wrong data type. If we store object we must get an object back.' );
+		$this->assertTrue( \is_object( $result ), 'Wrong data type. If we store object we must get an object back.' );
 		$this->assertEquals( $object, $result );
 	}
 
@@ -641,7 +641,7 @@ abstract class AdapterTestCase extends Test_Case {
 	public function test_binary_data() {
 		$data = '';
 		for ( $i = 0; $i < 256; $i++ ) {
-			$data .= chr( $i );
+			$data .= \chr( $i );
 		}
 
 		$this->cache->set( 'key', $data );
