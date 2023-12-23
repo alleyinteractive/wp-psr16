@@ -312,10 +312,10 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Normalize possible TTL types to seconds, if any. From https://github.com/laminas/laminas-cache/.
 	 *
-	 * @param mixed $ttl The TTL to normalize.
+	 * @param int|DateInterval|null $ttl The TTL to normalize.
 	 * @return int|null
 	 */
-	private function normalized_ttl( mixed $ttl ): int|null {
+	private function normalized_ttl( int|DateInterval|null $ttl ): int|null {
 		// null === absence of a TTL.
 		if ( null === $ttl ) {
 			return null;
@@ -361,13 +361,13 @@ final class PSR16_Compliant implements CacheInterface {
 	 *
 	 * @throws Invalid_Argument_Exception If stale value cannot be deleted.
 	 *
-	 * @param mixed $key     The item's expected key.
-	 * @param mixed $cache   The value to decode.
-	 * @param mixed $default The default value.
+	 * @param string $key     The item's expected key.
+	 * @param mixed  $cache   The value to decode.
+	 * @param mixed  $default The default value.
 	 * @return mixed
 	 */
-	private function decoded_value( mixed $key, mixed $cache, mixed $default ): mixed {
-		if ( ! is_serialized( $cache ) ) {
+	private function decoded_value( string $key, mixed $cache, mixed $default ): mixed {
+		if ( ! \is_string( $cache ) || ! is_serialized( $cache ) ) {
 			// Not recognized.
 			return $default;
 		}
