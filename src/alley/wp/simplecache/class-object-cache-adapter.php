@@ -76,6 +76,7 @@ final class Object_Cache_Adapter implements CacheInterface {
 			$key,
 			$value,
 			$this->group,
+			// @phpstan-ignore-next-line
 			null === $ttl ? 0 : (int) $ttl, // phpcs:ignore WordPressVIPMinimum.Performance.LowExpiryCacheTime.CacheTimeUndetermined
 		);
 	}
@@ -150,6 +151,7 @@ final class Object_Cache_Adapter implements CacheInterface {
 		$results = wp_cache_set_multiple(
 			\is_array( $values ) ? $values : iterator_to_array( $values ),
 			$this->group,
+			// @phpstan-ignore-next-line
 			null === $ttl ? 0 : (int) $ttl,
 		);
 
