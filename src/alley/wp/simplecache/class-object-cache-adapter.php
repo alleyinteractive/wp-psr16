@@ -122,7 +122,7 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
 	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
-		$out = wp_cache_get_multiple( is_array( $keys ) ? $keys : iterator_to_array( $keys ), $this->group );
+		$out = wp_cache_get_multiple( \is_array( $keys ) ? $keys : iterator_to_array( $keys ), $this->group );
 
 		foreach ( $out as $key => $value ) {
 			if ( false === $value ) {
