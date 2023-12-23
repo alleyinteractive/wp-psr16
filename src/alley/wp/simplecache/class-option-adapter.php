@@ -29,7 +29,10 @@ final class Option_Adapter implements CacheInterface {
 			new NativeClock(),
 			new Prefixed_Keys(
 				'_psr16_',
-				new self(),
+				new Maximum_Key_Length(
+					172,
+					new self(),
+				),
 			),
 		);
 	}
@@ -44,7 +47,7 @@ final class Option_Adapter implements CacheInterface {
 	 * @return mixed The value of the item from the cache, or $default in case of cache miss.
 	 */
 	public function get( string $key, mixed $default = null ): mixed {
-		return get_option( $this->truncated_key( $key ), $default );
+		return get_option( $key, $default );
 	}
 
 	/**
@@ -58,7 +61,7 @@ final class Option_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function set( string $key, mixed $value, \DateInterval|int|null $ttl = null ): bool {
-		return (bool) update_option( $this->truncated_key( $key ), $value, false );
+		return (bool) update_option( $key, $value, false );
 	}
 
 	/**
@@ -73,7 +76,7 @@ final class Option_Adapter implements CacheInterface {
 		$result = true;
 
 		if ( $this->has( $key ) ) {
-			$result = delete_option( $this->truncated_key( $key ) );
+			$result = delete_option( $key );
 		}
 
 		return (bool) $result;
@@ -171,15 +174,5 @@ final class Option_Adapter implements CacheInterface {
 	public function has( string $key ): bool {
 		$ref = new \stdClass();
 		return $this->get( $key, $ref ) !== $ref;
-	}
-
-	/**
-	 * Truncate a key to the maximum length allowed by WordPress.
-	 *
-	 * @param string $key The key to truncate.
-	 * @return string
-	 */
-	private function truncated_key( string $key ): string {
-		return substr( $key, 0, 172 );
 	}
 }

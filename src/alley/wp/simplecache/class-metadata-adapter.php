@@ -37,7 +37,10 @@ final class Metadata_Adapter implements CacheInterface {
 			new NativeClock(),
 			new Prefixed_Keys(
 				'_psr16_',
-				new self( $type, $id ),
+				new Maximum_Key_Length(
+					255,
+					new self( $type, $id ),
+				),
 			),
 		);
 	}
@@ -113,8 +116,8 @@ final class Metadata_Adapter implements CacheInterface {
 		$type_function = "delete_{$this->type}_meta";
 
 		$result = \function_exists( $type_function )
-			? \call_user_func( $type_function, $this->id, $this->truncated_key( $key ) )
-			: delete_metadata( $this->type, $this->id, $this->truncated_key( $key ) );
+			? \call_user_func( $type_function, $this->id, $key )
+			: delete_metadata( $this->type, $this->id, $key );
 
 		return (bool) $result;
 	}
@@ -154,8 +157,8 @@ final class Metadata_Adapter implements CacheInterface {
 			foreach ( $keys as $key ) {
 				$out[ $key ] = $default;
 
-				if ( isset( $metadata[ $this->truncated_key( $key ) ][0] ) ) {
-					$out[ $key ] = maybe_unserialize( $metadata[ $this->truncated_key( $key ) ][0] );
+				if ( isset( $metadata[ $key ][0] ) ) {
+					$out[ $key ] = maybe_unserialize( $metadata[ $key ][0] );
 				}
 			}
 		}
@@ -181,8 +184,8 @@ final class Metadata_Adapter implements CacheInterface {
 		$type_function = "update_{$this->type}_meta";
 
 		$update_function = \function_exists( $type_function )
-			? fn ( $key, $value ) => \call_user_func( $type_function, $this->id, $this->truncated_key( $key ), $value )
-			: fn ( $key, $value ) => update_metadata( $this->type, $this->id, $this->truncated_key( $key ), $value );
+			? fn ( $key, $value ) => \call_user_func( $type_function, $this->id, $key, $value )
+			: fn ( $key, $value ) => update_metadata( $this->type, $this->id, $key, $value );
 
 		$success = true;
 
@@ -227,17 +230,6 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool
 	 */
 	public function has( string $key ): bool {
-		return metadata_exists( $this->type, $this->id, $this->truncated_key( $key ) );
-	}
-
-
-	/**
-	 * Truncate a key to the maximum length allowed by WordPress.
-	 *
-	 * @param string $key The key to truncate.
-	 * @return string
-	 */
-	private function truncated_key( string $key ): string {
-		return substr( $key, 0, 255 );
+		return metadata_exists( $this->type, $this->id, $key );
 	}
 }

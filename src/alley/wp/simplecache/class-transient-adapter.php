@@ -29,7 +29,10 @@ final class Transient_Adapter implements CacheInterface {
 			new NativeClock(),
 			new Prefixed_Keys(
 				'_psr16_',
-				new self(),
+				new Maximum_Key_Length(
+					172,
+					new self(),
+				),
 			),
 		);
 	}
@@ -44,7 +47,7 @@ final class Transient_Adapter implements CacheInterface {
 	 * @return mixed The value of the item from the cache, or $default in case of cache miss.
 	 */
 	public function get( string $key, mixed $default = null ): mixed {
-		$out = get_transient( $this->truncated_key( $key ) );
+		$out = get_transient( $key );
 
 		if ( false === $out ) {
 			$out = $default;
@@ -65,7 +68,7 @@ final class Transient_Adapter implements CacheInterface {
 	 */
 	public function set( string $key, mixed $value, \DateInterval|int|null $ttl = null ): bool {
 		return (bool) set_transient(
-			$this->truncated_key( $key ),
+			$key,
 			$value,
 			// @phpstan-ignore-next-line The PSR16_Compliant cache normalizes TTLs to int|null.
 			null === $ttl ? 0 : (int) $ttl,
@@ -84,7 +87,7 @@ final class Transient_Adapter implements CacheInterface {
 		$result = true;
 
 		if ( $this->has( $key ) ) {
-			$result = delete_transient( $this->truncated_key( $key ) );
+			$result = delete_transient( $key );
 		}
 
 		return (bool) $result;
@@ -181,16 +184,6 @@ final class Transient_Adapter implements CacheInterface {
 	 * @return bool
 	 */
 	public function has( string $key ): bool {
-		return false !== get_transient( $this->truncated_key( $key ) );
-	}
-
-	/**
-	 * Truncate a key to the maximum length allowed by WordPress.
-	 *
-	 * @param string $key The key to truncate.
-	 * @return string
-	 */
-	private function truncated_key( string $key ): string {
-		return substr( $key, 0, 172 );
+		return false !== get_transient( $key );
 	}
 }
