@@ -74,7 +74,13 @@ final class Metadata_Adapter implements CacheInterface {
 	public function get( string $key, mixed $default = null ): mixed {
 		$get = $this->getMultiple( [ $key ], $default );
 
-		return $get[ $key ];
+		$out = $default;
+
+		foreach ( $get as $value ) {
+			$out = $value;
+		}
+
+		return $out;
 	}
 
 	/**
@@ -172,7 +178,8 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple( iterable $values, \DateInterval|int|null $ttl = null ): bool {
-		$type_function   = "update_{$this->type}_meta";
+		$type_function = "update_{$this->type}_meta";
+
 		$update_function = \function_exists( $type_function )
 			? fn ( $key, $value ) => \call_user_func( $type_function, $this->id, $this->truncated_key( $key ), $value )
 			: fn ( $key, $value ) => update_metadata( $this->type, $this->id, $this->truncated_key( $key ), $value );

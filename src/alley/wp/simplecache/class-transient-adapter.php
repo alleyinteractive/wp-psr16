@@ -64,7 +64,12 @@ final class Transient_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function set( string $key, mixed $value, \DateInterval|int|null $ttl = null ): bool {
-		return (bool) set_transient( $this->truncated_key( $key ), $value, null === $ttl ? 0 : (int) $ttl );
+		return (bool) set_transient(
+			$this->truncated_key( $key ),
+			$value,
+			// @phpstan-ignore-next-line The PSR16_Compliant cache normalizes TTLs to int|null.
+			null === $ttl ? 0 : (int) $ttl,
+		);
 	}
 
 	/**
