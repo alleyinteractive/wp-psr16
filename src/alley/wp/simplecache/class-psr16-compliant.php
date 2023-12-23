@@ -109,8 +109,11 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Obtains multiple cache items by their unique keys.
 	 *
-	 * @throws Invalid_Argument_Exception If $keys is neither an array nor a Traversable, or if any of
-	 *                                    the $keys are not a legal value.
+	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
+	 *                                                   the $keys are not a legal value.
+	 *
+	 * @phpstan-param iterable<string> $keys
+	 * @phpstan-return iterable<string, mixed>
 	 *
 	 * @param iterable $keys    A list of keys that can be obtained in a single operation.
 	 * @param mixed    $default Default value to return for keys that do not exist.
@@ -138,8 +141,10 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Persists a set of key => value pairs in the cache, with an optional TTL.
 	 *
-	 * @throws Invalid_Argument_Exception If $keys is neither an array nor a Traversable, or if any of
-	 *                                    the $keys are not a legal value.
+	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
+	 *                                                    the $keys are not a legal value.
+	 *
+	 * @phpstan-param iterable<string, mixed> $values
 	 *
 	 * @param iterable               $values A list of key => value pairs for a multiple-set operation.
 	 * @param null|int|\DateInterval $ttl    Optional. The TTL value of this item. If no value is sent and
@@ -173,8 +178,10 @@ final class PSR16_Compliant implements CacheInterface {
 	/**
 	 * Deletes multiple cache items in a single operation.
 	 *
-	 * @throws Invalid_Argument_Exception If $keys is neither an array nor a Traversable, or if any of
-	 *                                    the $keys are not a legal value.
+	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
+	 *                                                     the $keys are not a legal value.
+	 *
+	 * @phpstan-param iterable<string> $keys
 	 *
 	 * @param iterable $keys A list of string-based keys to be deleted.
 	 * @return bool True if the items were successfully removed. False if there was an error.
@@ -260,6 +267,25 @@ final class PSR16_Compliant implements CacheInterface {
 				),
 			);
 		}
+	}
+
+	/**
+	 * Get keys from iterable.
+	 *
+	 * @phpstan-param iterable<string> $keys
+	 * @phpstan-return array<string>
+	 *
+	 * @param iterable $keys The iterable.
+	 * @return array
+	 */
+	private function iterable_keys( iterable $keys ): array {
+		$out = [];
+
+		foreach ( $keys as $key ) {
+			$out[] = $key;
+		}
+
+		return $out;
 	}
 
 	/**
@@ -371,21 +397,5 @@ final class PSR16_Compliant implements CacheInterface {
 		}
 
 		return $cache['val'];
-	}
-
-	/**
-	 * Get keys from iterable.
-	 *
-	 * @param iterable $keys The iterable.
-	 * @return array
-	 */
-	private function iterable_keys( iterable $keys ): array {
-		$out = [];
-
-		foreach ( $keys as $key ) {
-			$out[] = $key;
-		}
-
-		return $out;
 	}
 }

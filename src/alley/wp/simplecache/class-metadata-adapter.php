@@ -104,9 +104,13 @@ final class Metadata_Adapter implements CacheInterface {
 			return true;
 		}
 
-		return \function_exists( "delete_{$this->type}_meta" )
-			? \call_user_func( "delete_{$this->type}_meta", $this->id, $this->truncated_key( $key ) )
+		$type_function = "delete_{$this->type}_meta";
+
+		$result = \function_exists( $type_function )
+			? \call_user_func( $type_function, $this->id, $this->truncated_key( $key ) )
 			: delete_metadata( $this->type, $this->id, $this->truncated_key( $key ) );
+
+		return (bool) $result;
 	}
 
 	/**
@@ -124,13 +128,18 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                   the $keys are not a legal value.
 	 *
+	 * @phpstan-param iterable<string> $keys
+	 * @phpstan-return iterable<string, mixed>
+	 *
 	 * @param iterable $keys    A list of keys that can be obtained in a single operation.
 	 * @param mixed    $default Default value to return for keys that do not exist.
 	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
 	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
-		$metadata = \function_exists( "get_{$this->type}_meta" )
-			? \call_user_func( "get_{$this->type}_meta", $this->id )
+		$type_function = "get_{$this->type}_meta";
+
+		$metadata = \function_exists( $type_function )
+			? \call_user_func( $type_function, $this->id )
 			: get_metadata( $this->type, $this->id );
 
 		$out = [];
@@ -154,6 +163,8 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                    the $keys are not a legal value.
 	 *
+	 * @phpstan-param iterable<string, mixed> $values
+	 *
 	 * @param iterable               $values A list of key => value pairs for a multiple-set operation.
 	 * @param null|int|\DateInterval $ttl    Optional. The TTL value of this item. If no value is sent and
 	 *                                       the driver supports TTL then the library may set a default value
@@ -161,14 +172,15 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple( iterable $values, \DateInterval|int|null $ttl = null ): bool {
-		$cb = \function_exists( "update_{$this->type}_meta" )
-			? fn ( $key, $value ) => \call_user_func( "update_{$this->type}_meta", $this->id, $this->truncated_key( $key ), $value )
+		$type_function   = "update_{$this->type}_meta";
+		$update_function = \function_exists( $type_function )
+			? fn ( $key, $value ) => \call_user_func( $type_function, $this->id, $this->truncated_key( $key ), $value )
 			: fn ( $key, $value ) => update_metadata( $this->type, $this->id, $this->truncated_key( $key ), $value );
 
 		$success = true;
 
 		foreach ( $values as $key => $value ) {
-			if ( ! $cb( $key, $value ) ) {
+			if ( ! $update_function( $key, $value ) ) {
 				$success = false;
 			}
 		}
@@ -181,6 +193,8 @@ final class Metadata_Adapter implements CacheInterface {
 	 *
 	 * @throws \Psr\SimpleCache\InvalidArgumentException If $keys is neither an array nor a Traversable, or if any of
 	 *                                                     the $keys are not a legal value.
+	 *
+	 * @phpstan-param iterable<string> $keys
 	 *
 	 * @param iterable $keys A list of string-based keys to be deleted.
 	 * @return bool True if the items were successfully removed. False if there was an error.
