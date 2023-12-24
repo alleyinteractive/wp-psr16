@@ -23,6 +23,13 @@ final class MetadataAdapterTest extends AdapterTestCase {
 	}
 
 	/**
+	 * Test clear().
+	 */
+	public function test_clear() {
+		$this->markTestSkipped( 'Metadata_Adapter does not support clear()' );
+	}
+
+	/**
 	 * Test binary data preservation.
 	 */
 	public function test_binary_data() {
