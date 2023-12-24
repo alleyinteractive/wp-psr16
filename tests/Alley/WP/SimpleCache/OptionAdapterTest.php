@@ -14,6 +14,15 @@ use Psr\SimpleCache\CacheInterface;
  */
 final class OptionAdapterTest extends AdapterTestCase {
 	/**
+	 * Create instance that is used in the tests.
+	 *
+	 * @return CacheInterface
+	 */
+	public function create_simplecache() {
+		return Option_Adapter::create();
+	}
+
+	/**
 	 * Test clear().
 	 */
 	public function test_clear() {
@@ -25,14 +34,5 @@ final class OptionAdapterTest extends AdapterTestCase {
 	 */
 	public function test_binary_data() {
 		$this->markTestSkipped( 'wpdb does not support saving binary data' );
-	}
-
-	/**
-	 * Create instance that is used in the tests.
-	 *
-	 * @return CacheInterface
-	 */
-	public function create_simplecache() {
-		return Option_Adapter::create();
 	}
 }
