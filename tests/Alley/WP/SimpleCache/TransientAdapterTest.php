@@ -26,7 +26,7 @@ final class TransientAdapterTest extends AdapterTestCase {
 	 * Test clear().
 	 */
 	public function test_clear() {
-		$this->markTestSkipped( 'TransientAdapter does not support clear()' );
+		$this->markTestSkipped( 'Transient_Adapter does not support clear()' );
 	}
 
 	/**

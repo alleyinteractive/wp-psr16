@@ -39,7 +39,10 @@ final class Metadata_Adapter implements CacheInterface {
 				'_psr16_',
 				new Maximum_Key_Length(
 					255,
-					new self( $type, $id ),
+					new self(
+						$type,
+						$id,
+					),
 				),
 			),
 		);
