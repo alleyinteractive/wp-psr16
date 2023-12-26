@@ -116,13 +116,7 @@ final class Metadata_Adapter implements CacheInterface {
 			return true;
 		}
 
-		$type_function = "delete_{$this->type}_meta";
-
-		$result = \function_exists( $type_function )
-			? \call_user_func( $type_function, $this->id, $key )
-			: delete_metadata( $this->type, $this->id, $key );
-
-		return (bool) $result;
+		return (bool) delete_metadata( $this->type, $this->id, $key );
 	}
 
 	/**
@@ -148,11 +142,7 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return iterable A list of key => value pairs. Cache keys that do not exist or are stale will have $default as value.
 	 */
 	public function getMultiple( iterable $keys, mixed $default = null ): iterable {
-		$type_function = "get_{$this->type}_meta";
-
-		$metadata = \function_exists( $type_function )
-			? \call_user_func( $type_function, $this->id )
-			: get_metadata( $this->type, $this->id );
+		$metadata = get_metadata( $this->type, $this->id );
 
 		$out = [];
 
@@ -184,16 +174,10 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple( iterable $values, \DateInterval|int|null $ttl = null ): bool {
-		$type_function = "update_{$this->type}_meta";
-
-		$update_function = \function_exists( $type_function )
-			? fn ( $key, $value ) => \call_user_func( $type_function, $this->id, $key, $value )
-			: fn ( $key, $value ) => update_metadata( $this->type, $this->id, $key, $value );
-
 		$success = true;
 
 		foreach ( $values as $key => $value ) {
-			if ( ! $update_function( $key, $value ) ) {
+			if ( ! update_metadata( $this->type, $this->id, $key, $value ) ) {
 				$success = false;
 			}
 		}

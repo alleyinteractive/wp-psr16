@@ -5,3 +5,7 @@ This library adheres to [Semantic Versioning](https://semver.org/) and [Keep a C
 ## Unreleased
 
 Nothing yet.
+
+## 0.1.0
+
+Initial release.

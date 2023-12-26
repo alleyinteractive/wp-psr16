@@ -10,7 +10,6 @@ namespace Alley\WP\SimpleCache;
 use DateInterval;
 use Psr\Clock\ClockInterface;
 use Psr\SimpleCache\CacheInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Ensures PSR-16 compliance for the underlying cache implementation.
