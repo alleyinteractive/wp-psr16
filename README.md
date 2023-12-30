@@ -1,6 +1,6 @@
 # PSR16
 
-This library provides PSR-16 implementations for WordPress projects. It includes adapters for caching data in the object cache, as transients, as options, and as post, term, or other object metadata.
+This library provides [PSR-16](https://www.php-fig.org/psr/psr-16/) implementations for WordPress projects. It includes adapters for caching data in the object cache, as transients, as options, and as post, term, or other object metadata.
 
 ## Installation
 
