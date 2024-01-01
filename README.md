@@ -1,4 +1,4 @@
-# PSR16
+# PSR-16 Implementations for WordPress
 
 This library provides [PSR-16](https://www.php-fig.org/psr/psr-16/) implementations for WordPress projects. It includes adapters for caching data in the object cache, as transients, as options, and as post, term, or other object metadata.
 
@@ -17,13 +17,30 @@ All the adapters in this library implement the `\Psr\SimpleCache\CacheInterface`
 ```php
 <?php
 
-$transient    = \Alley\WP\SimpleCache\Transient_Adapter::create();
+// Cache data using transients as the datastore.
+$transient = \Alley\WP\SimpleCache\Transient_Adapter::create();
+
+// Cache data using the object cache as the datastore.
 $object_cache = \Alley\WP\SimpleCache\Object_Cache_Adapter::create();
-$option       = \Alley\WP\SimpleCache\Option_Adapter::create();
-$post_meta    = \Alley\WP\SimpleCache\Metadata_Adapter::for_post( 123 );
-$term_meta    = \Alley\WP\SimpleCache\Metadata_Adapter::for_term( 123 );
-$user_meta    = \Alley\WP\SimpleCache\Metadata_Adapter::create( 'user', 123 );
-$custom_meta  = \Alley\WP\SimpleCache\Metadata_Adapter::create( 'custom', 123 );
+
+/*
+ * Cache data using options as the datastore. The options are not autoloaded.
+ * Using options as the datastore can be slower than using transients or the
+ * object cache because CRUD operations might require database queries.
+ * However, options are never evicted from the database.
+ */
+$option = \Alley\WP\SimpleCache\Option_Adapter::create();
+
+/*
+ * Cache data using object metadata as the datastore. Like the option adapter,
+ * CRUD operations with the metadata adapter might require database queries.
+ * However, these adapters allow you to store object-specific cache items,
+ * for example, caching related posts for a given post.
+ */
+$post_meta   = \Alley\WP\SimpleCache\Metadata_Adapter::for_post( 123 );
+$term_meta   = \Alley\WP\SimpleCache\Metadata_Adapter::for_term( 123 );
+$user_meta   = \Alley\WP\SimpleCache\Metadata_Adapter::create( 'user', 123 );
+$custom_meta = \Alley\WP\SimpleCache\Metadata_Adapter::create( 'custom', 123 );
 ```
 
 ## Implementation details
