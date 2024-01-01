@@ -1,6 +1,6 @@
 {
   "name": "alleyinteractive/wp-psr16",
-  "description": "PSR-16 implementations for WordPress.",
+  "description": "PSR-16 implementations for WordPress that cache data in the object cache, as transients, as options, and as object metadata.",
   "type": "library",
   "homepage": "https://github.com/alleyinteractive/wp-psr16",
   "license": "GPL-2.0-or-later",
