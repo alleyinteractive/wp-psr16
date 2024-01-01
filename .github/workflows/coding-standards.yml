@@ -10,5 +10,6 @@ jobs:
   coding-standards:
     if: github.event.pull_request.draft == false
     uses: alleyinteractive/.github/.github/workflows/php-coding-standards.yml@main
+    name: coding-standards.yml
     with:
       php: 8.2

@@ -10,5 +10,6 @@ jobs:
   code-quality:
     if: github.event.pull_request.draft == false
     uses: alleyinteractive/.github/.github/workflows/php-code-quality.yml@main
+    name: code-quality.yml
     with:
       php: 8.2
