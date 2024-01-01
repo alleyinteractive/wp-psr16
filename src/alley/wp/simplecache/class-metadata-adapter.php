@@ -80,7 +80,15 @@ final class Metadata_Adapter implements CacheInterface {
 	public function get( string $key, mixed $default = null ): mixed {
 		$get = $this->getMultiple( [ $key ], $default );
 
-		return $get[ $key ];
+		$out = $default;
+
+		foreach ( $get as $index => $value ) {
+			if ( $index === $key ) {
+				$out = $value;
+			}
+		}
+
+		return $out;
 	}
 
 	/**
