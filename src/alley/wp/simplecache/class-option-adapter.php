@@ -61,7 +61,9 @@ final class Option_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function set( string $key, mixed $value, \DateInterval|int|null $ttl = null ): bool {
-		return (bool) update_option( $key, $value, false );
+		update_option( $key, $value, false );
+
+		return true;
 	}
 
 	/**
@@ -73,13 +75,9 @@ final class Option_Adapter implements CacheInterface {
 	 * @return bool True if the item was successfully removed. False if there was an error.
 	 */
 	public function delete( string $key ): bool {
-		$result = true;
+		delete_option( $key );
 
-		if ( $this->has( $key ) ) {
-			$result = delete_option( $key );
-		}
-
-		return (bool) $result;
+		return true;
 	}
 
 	/**
@@ -129,15 +127,11 @@ final class Option_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple( iterable $values, \DateInterval|int|null $ttl = null ): bool {
-		$success = true;
-
 		foreach ( $values as $key => $value ) {
-			if ( ! $this->set( $key, $value, $ttl ) ) {
-				$success = false;
-			}
+			$this->set( $key, $value, $ttl );
 		}
 
-		return $success;
+		return true;
 	}
 
 	/**
@@ -152,15 +146,11 @@ final class Option_Adapter implements CacheInterface {
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
-		$success = true;
-
 		foreach ( $keys as $key ) {
-			if ( ! $this->delete( $key ) ) {
-				$success = false;
-			}
+			$this->delete( $key );
 		}
 
-		return $success;
+		return true;
 	}
 
 	/**

@@ -114,11 +114,9 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool True if the item was successfully removed. False if there was an error.
 	 */
 	public function delete( string $key ): bool {
-		if ( ! $this->has( $key ) ) {
-			return true;
-		}
+		delete_metadata( $this->type, $this->id, $key );
 
-		return (bool) delete_metadata( $this->type, $this->id, $key );
+		return true;
 	}
 
 	/**
@@ -176,15 +174,11 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple( iterable $values, \DateInterval|int|null $ttl = null ): bool {
-		$success = true;
-
 		foreach ( $values as $key => $value ) {
-			if ( ! update_metadata( $this->type, $this->id, $key, $value ) ) {
-				$success = false;
-			}
+			update_metadata( $this->type, $this->id, $key, $value );
 		}
 
-		return $success;
+		return true;
 	}
 
 	/**
@@ -199,15 +193,11 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
-		$success = true;
-
 		foreach ( $keys as $key ) {
-			if ( ! $this->delete( $key ) ) {
-				$success = false;
-			}
+			$this->delete( $key );
 		}
 
-		return $success;
+		return true;
 	}
 
 	/**
@@ -219,6 +209,6 @@ final class Metadata_Adapter implements CacheInterface {
 	 * @return bool
 	 */
 	public function has( string $key ): bool {
-		return metadata_exists( $this->type, $this->id, $key );
+		return (bool) metadata_exists( $this->type, $this->id, $key );
 	}
 }

@@ -72,13 +72,15 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function set( string $key, mixed $value, \DateInterval|int|null $ttl = null ): bool {
-		return (bool) wp_cache_set(
+		wp_cache_set(
 			$key,
 			$value,
 			$this->group,
 			// @phpstan-ignore-next-line The PSR16_Compliant cache normalizes TTLs to int|null.
 			null === $ttl ? 0 : (int) $ttl, // phpcs:ignore WordPressVIPMinimum.Performance.LowExpiryCacheTime.CacheTimeUndetermined
 		);
+
+		return true;
 	}
 
 	/**
@@ -90,13 +92,9 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return bool True if the item was successfully removed. False if there was an error.
 	 */
 	public function delete( string $key ): bool {
-		$result = true;
+		wp_cache_delete( $key, $this->group );
 
-		if ( $this->has( $key ) ) {
-			$result = wp_cache_delete( $key, $this->group );
-		}
-
-		return (bool) $result;
+		return true;
 	}
 
 	/**
@@ -105,7 +103,9 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function clear(): bool {
-		return wp_cache_flush_group( $this->group );
+		wp_cache_flush_group( $this->group );
+
+		return true;
 	}
 
 	/**
@@ -148,23 +148,14 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple( iterable $values, \DateInterval|int|null $ttl = null ): bool {
-		$results = wp_cache_set_multiple(
+		wp_cache_set_multiple(
 			\is_array( $values ) ? $values : iterator_to_array( $values ),
 			$this->group,
 			// @phpstan-ignore-next-line
 			null === $ttl ? 0 : (int) $ttl,
 		);
 
-		$success = true;
-
-		foreach ( $results as $result ) {
-			if ( false === $result ) {
-				$success = false;
-				break;
-			}
-		}
-
-		return $success;
+		return true;
 	}
 
 	/**
@@ -179,26 +170,12 @@ final class Object_Cache_Adapter implements CacheInterface {
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple( iterable $keys ): bool {
-		$delete = [];
+		wp_cache_delete_multiple(
+			\is_array( $keys ) ? $keys : iterator_to_array( $keys ),
+			$this->group,
+		);
 
-		foreach ( $keys as $key ) {
-			if ( $this->has( $key ) ) {
-				$delete[] = $key;
-			}
-		}
-
-		$results = wp_cache_delete_multiple( $delete, $this->group );
-
-		$success = true;
-
-		foreach ( $results as $result ) {
-			if ( false === $result ) {
-				$success = false;
-				break;
-			}
-		}
-
-		return $success;
+		return true;
 	}
 
 	/**
