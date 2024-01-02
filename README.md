@@ -26,16 +26,15 @@ $object_cache = \Alley\WP\SimpleCache\Object_Cache_Adapter::create();
 /*
  * Cache data using options as the datastore. The options are not autoloaded.
  * Using options as the datastore can be slower than using transients or the
- * object cache because CRUD operations might require database queries.
- * However, options are never evicted from the database.
+ * object cache, but items are never evicted like in Memcache or Redis.
  */
 $option = \Alley\WP\SimpleCache\Option_Adapter::create();
 
 /*
- * Cache data using object metadata as the datastore. Like the option adapter,
- * CRUD operations with the metadata adapter might require database queries.
- * However, these adapters allow you to store object-specific cache items,
- * for example, caching related posts for a given post.
+ * Cache data using object metadata as the datastore. This allows cache items to
+ * be associated with a specific post, term, or other object that supports metadata.
+ * For example, you could cache an individual post's related posts. Like options,
+ * using metadata as the datastore can be slower, but items are never evicted.
  */
 $post_meta   = \Alley\WP\SimpleCache\Metadata_Adapter::for_post( 123 );
 $term_meta   = \Alley\WP\SimpleCache\Metadata_Adapter::for_term( 123 );
