@@ -7,7 +7,7 @@ This library provides [PSR-16](https://www.php-fig.org/psr/psr-16/) implementati
 Install the latest version with:
 
 ```bash
-$ composer require alleyinteractive/wp-psr16
+composer require alleyinteractive/wp-psr16
 ```
 
 ## Basic usage

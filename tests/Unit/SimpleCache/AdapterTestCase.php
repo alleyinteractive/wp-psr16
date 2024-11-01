@@ -5,12 +5,12 @@
  * @package wp-psr16
  */
 
-namespace Alley\WP\SimpleCache;
+namespace Alley\WP\Tests\Unit\SimpleCache;
 
 use Alley\WP\SimpleCache\PSR16_Compliant;
 use Mantle\Testkit\Test_Case;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\SimpleCache\CacheInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Symfony\Component\Clock\MockClock;
 
 /**
@@ -421,10 +421,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test get() with invalid keys.
 	 *
-	 * @dataProvider invalid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_keys' )]
 	public function test_get_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->get( $key );
@@ -433,10 +432,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test getMultiple() with invalid keys.
 	 *
-	 * @dataProvider invalid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_keys' )]
 	public function test_getMultiple_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->getMultiple( [ 'key1', $key, 'key2' ] );
@@ -454,10 +452,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test set() with invalid keys.
 	 *
-	 * @dataProvider invalid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_keys' )]
 	public function test_set_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->set( $key, 'foobar' );
@@ -466,10 +463,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test setMultiple() with invalid keys.
 	 *
-	 * @dataProvider invalid_array_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_array_keys' )]
 	public function test_setMultiple_invalid_keys( $key ) {
 		$values = function () use ( $key ) {
 			yield 'key1' => 'foo';
@@ -492,10 +488,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test has() with invalid keys.
 	 *
-	 * @dataProvider invalid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_keys' )]
 	public function test_has_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->has( $key );
@@ -504,10 +499,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test delete() with invalid keys.
 	 *
-	 * @dataProvider invalid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_keys' )]
 	public function test_delete_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->delete( $key );
@@ -516,10 +510,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test deleteMultiple() with invalid keys.
 	 *
-	 * @dataProvider invalid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'invalid_keys' )]
 	public function test_deleteMultiple_invalid_keys( $key ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->deleteMultiple( [ 'key1', $key, 'key2' ] );
@@ -536,10 +529,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test set() with invalid TTLs.
 	 *
-	 * @dataProvider invalid_ttl
-	 *
 	 * @param mixed $ttl TTL to test.
 	 */
+	#[DataProvider( 'invalid_ttl' )]
 	public function test_set_invalid_ttl( $ttl ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->set( 'key', 'value', $ttl );
@@ -548,10 +540,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test setMultiple() with invalid TTLs.
 	 *
-	 * @dataProvider invalid_ttl
-	 *
 	 * @param mixed $ttl TTL to test.
 	 */
+	#[DataProvider( 'invalid_ttl' )]
 	public function test_setMultiple_invalid_ttl( $ttl ) {
 		$this->expectException( 'Psr\SimpleCache\InvalidArgumentException' );
 		$this->cache->setMultiple( [ 'key' => 'value' ], $ttl );
@@ -652,10 +643,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test set() with valid keys.
 	 *
-	 * @dataProvider valid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'valid_keys' )]
 	public function test_set_valid_keys( $key ) {
 		$this->cache->set( $key, 'foobar' );
 		$this->assertEquals( 'foobar', $this->cache->get( $key ) );
@@ -664,10 +654,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test setMultiple() with valid keys.
 	 *
-	 * @dataProvider valid_keys
-	 *
 	 * @param mixed $key Key to test.
 	 */
+	#[DataProvider( 'valid_keys' )]
 	public function test_setMultiple_valid_keys( $key ) {
 		$this->cache->setMultiple( [ $key => 'foobar' ] );
 		$result = $this->cache->getMultiple( [ $key ] );
@@ -683,10 +672,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test set() with valid data.
 	 *
-	 * @dataProvider valid_data
-	 *
 	 * @param mixed $data Data to test.
 	 */
+	#[DataProvider( 'valid_data' )]
 	public function test_set_valid_data( $data ) {
 		$this->cache->set( 'key', $data );
 		$this->assertEquals( $data, $this->cache->get( 'key' ) );
@@ -695,10 +683,9 @@ abstract class AdapterTestCase extends Test_Case {
 	/**
 	 * Test setMultiple() with valid data.
 	 *
-	 * @dataProvider valid_data
-	 *
 	 * @param mixed $data Data to test.
 	 */
+	#[DataProvider( 'valid_data' )]
 	public function test_setMultiple_valid_data( $data ) {
 		$this->cache->setMultiple( [ 'key' => $data ] );
 		$result = $this->cache->getMultiple( [ 'key' ] );

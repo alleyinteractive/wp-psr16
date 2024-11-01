@@ -5,8 +5,9 @@
  * @package wp-psr16
  */
 
-namespace Alley\WP\SimpleCache;
+namespace Alley\WP\Tests\Unit\SimpleCache;
 
+use Alley\WP\SimpleCache\Transient_Adapter;
 use Psr\SimpleCache\CacheInterface;
 
 /**
