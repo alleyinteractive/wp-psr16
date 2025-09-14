@@ -14,7 +14,7 @@
     "php": "^8.2",
     "alleyinteractive/composer-wordpress-autoloader": "^1.0",
     "psr/simple-cache": "^2.0 || ^3.0",
-    "symfony/clock": "^6.4"
+    "symfony/clock": "^6.4 || ^7.3"
   },
   "require-dev": {
     "alleyinteractive/alley-coding-standards": "^2.0",
