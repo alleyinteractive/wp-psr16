@@ -6,6 +6,12 @@ This library adheres to [Semantic Versioning](https://semver.org/) and [Keep a C
 
 Nothing yet.
 
+## 0.4.0
+
+### Added
+
+- Support for Symfony 8 components.
+
 ## 0.3.0
 
 ### Added
